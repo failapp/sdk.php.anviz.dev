@@ -1,0 +1,60 @@
+version: "3.3"
+
+services:
+  mysql:
+    image: mysql:5.7
+    container_name: mysql-db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: sdkdemo
+      MYSQL_USER: anviz
+      MYSQL_PASSWORD: 12345
+      MYSQL_ROOT_PASSWORD: master
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./dbdata:/var/lib/mysql
+    networks:
+      - anviz-net
+  
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: pma
+    restart: unless-stopped
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_ARBITRARY: 1
+    ports:
+      - 8011:80
+    links:
+      - mysql
+    networks:
+      - anviz-net
+
+  php:
+    image: php:anviz
+    container_name: php-app
+    restart: unless-stopped
+    environment:
+      - TZ=America/Santiago
+    ports:
+      - 80:80
+    volumes:
+      - ./sdk:/var/www/html
+    stdin_open: true
+    tty: true
+    links:
+      - mysql
+    depends_on:
+      - mysql
+    networks:
+      - anviz-net
+
+volumes:
+  sdk: {}
+  dbdata: {}
+
+networks:
+  anviz-net:
+    driver: bridge
